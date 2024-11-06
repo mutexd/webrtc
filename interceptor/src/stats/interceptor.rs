@@ -87,6 +87,8 @@ pub struct StatsInterceptor {
     recv_streams: Mutex<HashMap<u32, Arc<RTPReadRecorder>>>,
     send_streams: Mutex<HashMap<u32, Arc<RTPWriteRecorder>>>,
 
+    rtcp_writer: Mutex<Option<Arc<dyn RTCPWriter + Send + Sync>>>,
+    rtcp_reader: Mutex<Option<Arc<dyn RTCPReader + Send + Sync>>>,
     tx: mpsc::Sender<Message>,
 
     id: String,
@@ -103,6 +105,8 @@ impl StatsInterceptor {
             id,
             recv_streams: Default::default(),
             send_streams: Default::default(),
+            rtcp_writer: Default::default(),
+            rtcp_reader: Default::default(),
             tx,
             now_gen: Arc::new(SystemTime::now),
         }
@@ -119,6 +123,8 @@ impl StatsInterceptor {
             id,
             recv_streams: Default::default(),
             send_streams: Default::default(),
+            rtcp_writer: Default::default(),
+            rtcp_reader: Default::default(),
             tx,
             now_gen: Arc::new(now_gen),
         }
@@ -356,11 +362,14 @@ impl Interceptor for StatsInterceptor {
     ) -> Arc<dyn RTCPWriter + Send + Sync> {
         let now = self.now_gen.clone();
 
-        Arc::new(RTCPWriteInterceptor {
+        let wrapped_writer = Arc::new(RTCPWriteInterceptor {
             rtcp_writer: writer,
             tx: self.tx.clone(),
             now_gen: move || now(),
-        })
+        }) as Arc<dyn RTCPWriter + Send + Sync>;
+
+        *self.rtcp_writer.lock() = Some(wrapped_writer.clone());
+        wrapped_writer
     }
 
     /// bind_rtcp_reader lets you modify any incoming RTCP packets. It is called once per sender/receiver, however this might
@@ -371,11 +380,14 @@ impl Interceptor for StatsInterceptor {
     ) -> Arc<dyn RTCPReader + Send + Sync> {
         let now = self.now_gen.clone();
 
-        Arc::new(RTCPReadInterceptor {
+        let wrapped_reader = Arc::new(RTCPReadInterceptor {
             rtcp_reader: reader,
             tx: self.tx.clone(),
             now_gen: move || now(),
-        })
+        }) as Arc<dyn RTCPReader + Send + Sync>;
+
+        *self.rtcp_reader.lock() = Some(wrapped_reader.clone());
+        wrapped_reader
     }
 }
 
@@ -852,6 +864,7 @@ mod test {
     use crate::error::Result;
     use crate::mock::mock_stream::MockStream;
     use crate::stream_info::StreamInfo;
+    use crate::Interceptor;
 
     #[tokio::test]
     async fn test_stats_interceptor_rtp() -> Result<()> {
@@ -935,15 +948,6 @@ mod test {
             // 10 Nov 1995 11:33:36.5 UTC
             SystemTime::UNIX_EPOCH + Duration::from_secs_f64(816003216.5)
         }));
-
-        let recv_stream = MockStream::new(
-            &StreamInfo {
-                ssrc: 123456,
-                ..Default::default()
-            },
-            icpr.clone(),
-        )
-        .await;
 
         let send_stream = MockStream::new(
             &StreamInfo {
@@ -1052,6 +1056,15 @@ mod test {
             .read_rtcp()
             .await
             .expect("After calling `receive_rtcp`, `read_rtcp` should return some packets");
+
+        let recv_stream = MockStream::new(
+            &StreamInfo {
+                ssrc: 123456,
+                ..Default::default()
+            },
+            icpr.clone(),
+        )
+        .await;
 
         recv_stream
             .write_rtcp(&[
@@ -1189,6 +1202,7 @@ mod test {
         assert_eq!(recv_snapshot.remote_round_trip_time_measurements(), 1);
         assert_feq!(recv_snapshot.remote_total_round_trip_time(), 6125.0);
 
+        icpr.close().await?;
         Ok(())
     }
 }
