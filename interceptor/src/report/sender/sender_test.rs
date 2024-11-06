@@ -25,7 +25,7 @@ async fn test_sender_interceptor_before_any_packet() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -54,7 +54,7 @@ async fn test_sender_interceptor_before_any_packet() -> Result<()> {
     }
 
     stream.close().await?;
-
+    icpr.close().await?;
     Ok(())
 }
 
@@ -77,7 +77,7 @@ async fn test_sender_interceptor_after_rtp_packets() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -118,6 +118,7 @@ async fn test_sender_interceptor_after_rtp_packets() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
 
     Ok(())
 }
@@ -141,7 +142,7 @@ async fn test_sender_interceptor_after_rtp_packets_overflow() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -220,7 +221,7 @@ async fn test_sender_interceptor_after_rtp_packets_overflow() -> Result<()> {
     }
 
     stream.close().await?;
-
+    icpr.close().await?;
     Ok(())
 }
 

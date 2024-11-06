@@ -20,7 +20,7 @@ async fn test_responder_interceptor() -> Result<()> {
             }],
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -71,6 +71,6 @@ async fn test_responder_interceptor() -> Result<()> {
     assert!(result.is_err(), "no more rtp packets expected");
 
     stream.close().await?;
-
+    icpr.close().await?;
     Ok(())
 }

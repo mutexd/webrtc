@@ -26,7 +26,7 @@ async fn test_twcc_receiver_interceptor_before_any_packets() -> Result<()> {
             }],
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -40,6 +40,7 @@ async fn test_twcc_receiver_interceptor_before_any_packets() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
 
     Ok(())
 }
@@ -59,7 +60,7 @@ async fn test_twcc_receiver_interceptor_after_rtp_packets() -> Result<()> {
             }],
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -96,6 +97,7 @@ async fn test_twcc_receiver_interceptor_after_rtp_packets() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
 
     Ok(())
 }
@@ -115,7 +117,7 @@ async fn test_twcc_receiver_interceptor_different_delays_between_rtp_packets() -
             }],
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -168,6 +170,7 @@ async fn test_twcc_receiver_interceptor_different_delays_between_rtp_packets() -
     }
 
     stream.close().await?;
+    icpr.close().await?;
 
     Ok(())
 }
@@ -187,7 +190,7 @@ async fn test_twcc_receiver_interceptor_packet_loss() -> Result<()> {
             }],
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -275,7 +278,7 @@ async fn test_twcc_receiver_interceptor_packet_loss() -> Result<()> {
     }
 
     stream.close().await?;
-
+    icpr.close().await?;
     Ok(())
 }
 
@@ -294,7 +297,7 @@ async fn test_twcc_receiver_interceptor_overflow() -> Result<()> {
             }],
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -356,6 +359,6 @@ async fn test_twcc_receiver_interceptor_overflow() -> Result<()> {
     }
 
     stream.close().await?;
-
+    icpr.close().await?;
     Ok(())
 }

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use async_trait::async_trait;
 use tokio::sync::{mpsc, Mutex};
@@ -12,10 +12,8 @@ type RTCPPackets = Vec<Box<dyn rtcp::packet::Packet + Send + Sync>>;
 
 /// MockStream is a helper struct for testing interceptors.
 pub struct MockStream {
-    interceptor: Arc<dyn Interceptor + Send + Sync>,
-
-    rtcp_writer: Mutex<Option<Arc<dyn RTCPWriter + Send + Sync>>>,
-    rtp_writer: Mutex<Option<Arc<dyn RTPWriter + Send + Sync>>>,
+    rtcp_writer: Mutex<Option<Weak<dyn RTCPWriter + Send + Sync>>>,
+    rtp_writer: Mutex<Option<Weak<dyn RTPWriter + Send + Sync>>>,
 
     rtcp_out_modified_tx: mpsc::Sender<RTCPPackets>,
     rtp_out_modified_tx: mpsc::Sender<rtp::packet::Packet>,
@@ -45,8 +43,6 @@ impl MockStream {
         let (rtp_in_modified_tx, rtp_in_modified_rx) = mpsc::channel(1000);
 
         let stream = Arc::new(MockStream {
-            interceptor: Arc::clone(&interceptor),
-
             rtcp_writer: Mutex::new(None),
             rtp_writer: Mutex::new(None),
 
@@ -69,7 +65,7 @@ impl MockStream {
             .await;
         {
             let mut rw = stream.rtcp_writer.lock().await;
-            *rw = Some(rtcp_writer);
+            *rw = Some(Arc::downgrade(&rtcp_writer));
         }
         let rtp_writer = interceptor
             .bind_local_stream(
@@ -79,7 +75,7 @@ impl MockStream {
             .await;
         {
             let mut rw = stream.rtp_writer.lock().await;
-            *rw = Some(rtp_writer);
+            *rw = Some(Arc::downgrade(&rtp_writer));
         }
 
         let rtcp_reader = interceptor
@@ -133,7 +129,7 @@ impl MockStream {
     ) -> Result<usize> {
         let a = Attributes::new();
         let rtcp_writer = self.rtcp_writer.lock().await;
-        if let Some(writer) = &*rtcp_writer {
+        if let Some(writer) = rtcp_writer.clone().and_then(|x| x.upgrade()) {
             writer.write(pkt, &a).await
         } else {
             Err(Error::Other("invalid rtcp_writer".to_owned()))
@@ -144,7 +140,7 @@ impl MockStream {
     pub async fn write_rtp(&self, pkt: &rtp::packet::Packet) -> Result<usize> {
         let a = Attributes::new();
         let rtp_writer = self.rtp_writer.lock().await;
-        if let Some(writer) = &*rtp_writer {
+        if let Some(writer) = rtp_writer.clone().and_then(|x| x.upgrade()) {
             writer.write(pkt, &a).await
         } else {
             Err(Error::Other("invalid rtp_writer".to_owned()))
@@ -209,7 +205,7 @@ impl MockStream {
         rtp_in_modified_rx.recv().await
     }
 
-    /// close closes the stream and the underlying interceptor
+    /// close closes the stream
     pub async fn close(&self) -> Result<()> {
         {
             let mut rtcp_in_tx = self.rtcp_in_tx.lock().await;
@@ -219,7 +215,8 @@ impl MockStream {
             let mut rtp_in_tx = self.rtp_in_tx.lock().await;
             rtp_in_tx.take();
         }
-        self.interceptor.close().await
+
+        Ok(())
     }
 }
 

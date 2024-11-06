@@ -32,7 +32,7 @@ async fn test_twcc_sender_interceptor() -> Result<()> {
                         }],
                         ..Default::default()
                     },
-                    icpr2,
+                    icpr2.clone(),
                 )
                 .await;
 
@@ -69,6 +69,7 @@ async fn test_twcc_sender_interceptor() -> Result<()> {
                 }
 
                 let _ = stream.close().await;
+                let _ = icpr2.close().await;
             });
         }
         wg.wait().await;

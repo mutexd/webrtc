@@ -25,7 +25,7 @@ async fn test_receiver_interceptor_before_any_packet() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -54,7 +54,7 @@ async fn test_receiver_interceptor_before_any_packet() -> Result<()> {
     }
 
     stream.close().await?;
-
+    icpr.close().await?;
     Ok(())
 }
 
@@ -77,7 +77,7 @@ async fn test_receiver_interceptor_after_rtp_packets() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -117,6 +117,7 @@ async fn test_receiver_interceptor_after_rtp_packets() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
 
     Ok(())
 }
@@ -142,7 +143,7 @@ async fn test_receiver_interceptor_after_rtp_and_rtcp_packets() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -200,6 +201,7 @@ async fn test_receiver_interceptor_after_rtp_and_rtcp_packets() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
 
     Ok(())
 }
@@ -226,7 +228,7 @@ async fn test_receiver_interceptor_overflow() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -278,6 +280,8 @@ async fn test_receiver_interceptor_overflow() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
+
     Ok(())
 }
 
@@ -300,7 +304,7 @@ async fn test_receiver_interceptor_overflow_five_pkts() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -378,6 +382,7 @@ async fn test_receiver_interceptor_overflow_five_pkts() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
     Ok(())
 }
 
@@ -402,7 +407,7 @@ async fn test_receiver_interceptor_packet_loss() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -491,6 +496,7 @@ async fn test_receiver_interceptor_packet_loss() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
     Ok(())
 }
 
@@ -513,7 +519,7 @@ async fn test_receiver_interceptor_overflow_and_packet_loss() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -561,6 +567,7 @@ async fn test_receiver_interceptor_overflow_and_packet_loss() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
     Ok(())
 }
 
@@ -583,7 +590,7 @@ async fn test_receiver_interceptor_reordered_packets() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -623,6 +630,7 @@ async fn test_receiver_interceptor_reordered_packets() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
     Ok(())
 }
 
@@ -645,7 +653,7 @@ async fn test_receiver_interceptor_jitter() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -703,6 +711,7 @@ async fn test_receiver_interceptor_jitter() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
     Ok(())
 }
 
@@ -725,7 +734,7 @@ async fn test_receiver_interceptor_delay() -> Result<()> {
             clock_rate: 90000,
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -768,5 +777,6 @@ async fn test_receiver_interceptor_delay() -> Result<()> {
     }
 
     stream.close().await?;
+    icpr.close().await?;
     Ok(())
 }

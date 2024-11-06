@@ -23,7 +23,7 @@ async fn test_generator_interceptor() -> Result<()> {
             }],
             ..Default::default()
         },
-        icpr,
+        icpr.clone(),
     )
     .await;
 
@@ -61,6 +61,6 @@ async fn test_generator_interceptor() -> Result<()> {
     }
 
     stream.close().await?;
-
+    icpr.close().await?;
     Ok(())
 }
